@@ -15,10 +15,25 @@ app.get('/:room',(req,res)=>{
     res.render('room',{roomId:req.params.room})
 });
 
-io.on('connection',socket=>{
-    socket.on('join-room',(roomId,userId)=>{
-        console.log(roomId,userId);
-    })
-})
+io.on('connection', socket => {
+    socket.on('join-room', (roomId, userId) => {
+        console.log(roomId, userId);
+        socket.join(roomId); 
+        socket.to(roomId).emit('user-connected', userId);  
+    });
+
+    socket.on('disconnect', () => {
+        const rooms = Object.keys(socket.rooms);
+        rooms.forEach(roomId => {
+            socket.to(roomId).emit('user-disconnect', socket.id);
+        });
+    });
+
+    socket.on('error', (err) => {
+        console.error('Socket Error:', err);
+    });
+});
+
+
 
 server.listen(3000);
